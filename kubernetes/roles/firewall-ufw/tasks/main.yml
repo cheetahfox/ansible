@@ -1,0 +1,27 @@
+---
+- name: install ufw 
+  apt: name=ufw state=present
+
+- name: Init and set the Incoming Deny policy 
+  ufw: state=enabled policy=deny direction=incoming
+
+- name: Init and set the Forward Accept policy
+  ufw: state=enabled policy=allow direction=routed
+
+- name: Allow SSH through UFW
+  ufw: rule=allow name=OpenSSH
+
+- name: Register that we are using ufw
+  set_fact: ufw_in_use=true 
+
+- name: Allow traffic on local private networks
+  ufw:
+    rule: allow
+    src: '{{ item }}'
+  with_items:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  tags:
+    - ufw-firewall
+

@@ -1,0 +1,32 @@
+---
+- name: Change default bash prompt for all new users
+  template: src=bashrc dest=/etc/skel/.bashrc mode="u=rw,g=r,o=r"
+
+- name: Change default bash prompt for ubuntu
+  template: src=bashrc dest=/home/ubuntu/.bashrc mode="u=rw,g=r,o=r"
+
+- name: Change default bash prompt for root
+  template: src=bashrc dest=/root/.bashrc mode="u=rw,g=r,o=r"
+
+- name: Update rules for passwords on the system
+  template: src=common-password dest=/etc/pam.d/common-password mode="u=rw,g=r,o=r"
+
+- name: Change sshd defaults
+  template: src=sshd_config dest=/etc/ssh/sshd_config mode="u=rw,g=r,o=r"
+  register: sshd_config
+
+- name: Restart sshd if needed
+  when: sshd_config|changed
+  service: name=sshd state=restarted
+
+- name: Update all packages
+  apt: upgrade=dist
+
+- name: Install ntpd
+  apt: name=ntp state=present
+
+- name: Install pip
+  apt: name=python-pip
+
+- name: Install speedtest-cli
+  pip: name=speedtest-cli

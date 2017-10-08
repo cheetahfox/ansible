@@ -1,0 +1,10 @@
+---
+- name: Get the Ip address of the Kubernetes Master
+  os_server_facts: server=kube-control
+  register: kubernetes_master
+
+- name: Set the controller Private IP addres in a localhost fact
+  set_fact: kubernetes_controll_ip="{{ (kubernetes_master.ansible_facts.openstack_servers | map(attribute='private_v4') | list) | unique }}"
+
+
+- debug: var=hostvars['localhost']['kubernetes_controll_ip'][0]

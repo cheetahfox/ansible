@@ -1,0 +1,159 @@
+---
+- name: Add the GPG Key for Kubernetes
+  apt_key: url=https://packages.cloud.google.com/apt/doc/apt-key.gpg state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: add the google kubernetes repository
+  apt_repository: repo='deb http://apt.kubernetes.io/ kubernetes-xenial main' state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: update the apt cache
+  apt: update_cache=yes
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Install Kubelet
+  apt: name=kubelet state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: install kubeadm
+  apt: name=kubeadm state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Install Kubectl
+  apt: name=kubectl state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Install Kubernetes-cni
+  apt: name=kubernetes-cni state=present
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Check to see if the kubernetes configuration is empty
+  command: ls /var/lib/kubelet/pods/
+  register: pod_config
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Move any possible configuration to backup
+  when: pod_config.stdout == ""
+  command: mv /var/lib/kubelet/ /var/lib/kubelet-{{ ansible_date_time.date }}
+  register: do_kubeadm_init
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: create the /var/lib/kubelet directory
+  when: do_kubeadm_init|changed
+  file: path=/var/lib/kubelet state=directory mode=0755
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: create the system.slice link
+  when: do_kubeadm_init|changed
+  file: src=/sys/fs/cgroup/memory/system.slice dest=/system.slice state=link
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Initalize kubernetes
+  when: do_kubeadm_init|changed
+  #command: kubeadm init --pod-network-cidr={{ kubernetes_network }} --token={{ kubernetes_admin_token }} --skip-preflight-checks
+  command: kubeadm init --pod-network-cidr={{ kubernetes_network }} --token={{ kubernetes_admin_token }} 
+  register: kubeadm_cmd
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- debug: var=kubeadm_cmd
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: create the root/.kube directory
+  file: path=/root/.kube/ state=directory mode=0755
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Copy the config file to the root users .kube directory
+  copy: src=/etc/kubernetes/admin.conf dest=/root/.kube/admin.conf remote_src=yes  
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Install Weave Kubernetes CNI networking
+  when: do_kubeadm_init|changed
+  command: kubectl apply -f https://git.io/weave-kube 
+  environment: 
+    KUBECONFIG: $HOME/.kube/admin.conf
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Set the $KUBECONFIG enviromental var
+  shell: "echo $KUBECONFIG"
+  environment:
+    KUBECONFIG: $HOME/.kube/admin.conf
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: install the Kubernetes dashboard
+  when: do_kubeadm_init|changed
+  command: kubectl create -f https://rawgit.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard.yaml
+  environment: 
+    KUBECONFIG: $HOME/.kube/admin.conf
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: copy the endpoint script
+  template: src=getendpoint dest=/tmp/getendpoint mode=0755
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+- name: Get the endpoint for the master node
+  command: /tmp/getendpoint
+  environment: 
+    KUBECONFIG: $HOME/.kube/admin.conf
+  register: kube_endpoint
+  tags: 
+    - kubernetes-master
+    - kubernetes
+
+- name: Set the endpoint for the Master Node 
+  set_fact: 
+    kubernetes_master_endpoint: "{{kube_endpoint.stdout}}"
+  tags: 
+    - kubernetes-master
+    - kubernetes
+
+- debug: var=kubernetes_master_endpoint
+  tags:
+    - kubernetes-master
+    - kubernetes
+
+
+
+#- name: Open the Docker Port if UFW is in use
+##  when: ufw_in_use|true
+#  ufw: rule=allow port=9090 proto=tcp
+#  tags:
+#     - kubernetes-master
+

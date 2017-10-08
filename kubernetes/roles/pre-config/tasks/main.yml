@@ -1,0 +1,15 @@
+---
+- name: Direct the sytem to use the Local Imagestream Apt-Cache
+  raw: echo 'Acquire::http::proxy "http://10.30.100.17:3142";' > /etc/apt/apt.conf.d/02proxy 
+  tags:
+    - pre-config
+
+- name: Inital system Update
+  raw: apt-get update -qq
+  tags:
+    - pre-config
+
+- name: Install Python 2.7
+  raw: apt-get install -qq -y python
+  tags:
+    - pre-config

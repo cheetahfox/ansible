@@ -1,0 +1,14 @@
+
+ansible_connection: ssh
+ansible_ssh_user: ubuntu
+kube_workers: 3
+
+floating_ip_pool: ext-net
+ex_net_name: ext-net
+
+zfs_pool_name: apps
+
+external_interface: ens3
+
+
+kubernetes_admin_token: f23e43.e3032aa399048ccf

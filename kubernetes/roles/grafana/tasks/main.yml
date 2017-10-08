@@ -1,0 +1,28 @@
+---
+- name: Import Package Cloud GPG signing key
+  apt_key: url=https://packagecloud.io/gpg.key state=present
+
+- name: Add the Grafana repository
+  apt_repository: repo='deb https://packagecloud.io/grafana/stable/debian/ wheezy main' state=present
+
+- name: Install Grafana package
+  apt: name=grafana state=present
+  register: grafana_changed
+
+- name: Set the admin user
+  ini_file: dest=/etc/grafana/grafana.ini section=security option=admin_user value=isadmin
+  register: grafana_changed
+
+- name: Change the Admin user password
+  ini_file: dest=/etc/grafana/grafana.ini section=security option=admin_password value=isis
+  register: grafana_changed
+
+- name: Make sure Grafana is set to startup on boot
+  service: name=grafana-server enabled=yes
+
+- name: Start or Restart the Grafana service
+  when: grafana_changed|changed
+  service: name=grafana-server state=restarted
+
+- name: poke a hole for port 3000 in the ufw firewall
+  ufw: rule=allow port=3000

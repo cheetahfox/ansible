@@ -1,0 +1,7 @@
+---
+# Joshua Snyder 6-5-2016
+- hosts: obake-new
+  become: true
+  become_user: root
+  roles:
+    - facts

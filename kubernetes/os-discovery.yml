@@ -1,0 +1,7 @@
+---
+# Joshua Snyder 6-5-2016
+- hosts: localhost
+  become: true
+  become_user: root
+  roles:
+    - os-discovery

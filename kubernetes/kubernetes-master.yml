@@ -1,0 +1,7 @@
+---
+# Joshua Snyder 6-5-2016
+- hosts: meta-type_kube-control
+  become: true
+  become_user: root
+  roles:
+    - kubernetes-master

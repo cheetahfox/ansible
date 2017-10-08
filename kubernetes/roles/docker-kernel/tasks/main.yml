@@ -1,0 +1,33 @@
+---
+- name: Add support in Grub for Memory and swap accounting
+  template: src=grub dest=/etc/default/grub mode="u=rw,g=r,o=r"
+  register: grub
+
+- name: Run update-grub if needed
+  when: grub|changed
+  shell: update-grub
+
+- name: Get the current kernel version
+  shell: uname -r
+  register: uname
+
+- name: install specific kernel recommended by docker
+  apt: name=linux-image-extra-{{ uname.stdout_lines[0] }} state=present
+  register: new_kernel
+
+- name: Install extra-vitual package
+  apt: name=linux-image-extra-virtual state=present
+
+- name: Reboot the server if needed
+  when: new_kernel|changed
+  shell: sleep 2 && shutdown -r now "Ansible requires the server to reboot"
+  async: 1
+  poll: 0
+  become: true
+  ignore_errors: true
+
+- name: waiting on the server to reboot
+  when: new_kernel|changed
+  local_action: wait_for host={{ ansible_ssh_host }} state=started delay=15 timeout=60
+  become: false
+

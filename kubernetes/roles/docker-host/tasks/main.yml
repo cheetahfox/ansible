@@ -1,0 +1,63 @@
+---
+- name: Install Apt-Transport-https
+  apt: name=apt-transport-https state=present
+  tags:
+     - docker-host
+
+- name: Install apt ca-certs
+  apt: name=ca-certificates state=present
+  tags:
+     - docker-host
+
+- name: Add the GPG Key for Docker
+  apt_key: keyserver=p80.pool.sks-keyservers.net id=58118E89F3A912897C070ADBF76221572C52609D state=present
+  tags:
+     - docker-host
+
+- name: add the Docker repository
+  apt_repository: repo='deb http://apt.dockerproject.org/repo ubuntu-xenial main' state=present 
+  register: docker_repo
+  tags:
+     - docker-host
+
+- name: update the apt cache
+  apt: update_cache=yes
+  tags:
+     - docker-host
+
+- name: create docker zfs filesystem
+  when: docker_repo|changed
+  command: zfs create -o mountpoint=/var/lib/docker {{ zfs_pool_name }}/docker 
+  tags:
+     - docker-host
+
+- name: Enable ipv4 forwarding
+  sysctl: name=net.ipv4.conf.default.forwarding value=1 state=present
+  tags:
+     - docker-host
+
+- name: Enable ipv6 forwarding
+  sysctl: name=net.ipv6.conf.default.forwarding value=1 state=present
+  tags:
+     - docker-host
+
+- name: Install Docker
+  apt: name=docker-engine state=present
+  tags:
+     - docker-host
+
+- name: Install Docker-Compose
+  apt: name=docker-compose state=present
+  tags:
+     - docker-host
+
+- name: Install Docker-py
+  pip: name=docker-py
+  tags:
+     - docker-host
+
+- name: Open the Docker Port if UFW is in use
+#  when: ufw_in_use|true
+  ufw: rule=allow port=2375 proto=tcp
+  tags:
+     - docker-host

@@ -1,0 +1,85 @@
+---
+- set_fact: 
+    kubernetes_master_endpoint: hostvars['localhost']['kubernetes_controll_ip'][0] 
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Add the GPG Key for Kubernetes
+  apt_key: url=https://packages.cloud.google.com/apt/doc/apt-key.gpg state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: add the google kubernetes repository
+  apt_repository: repo='deb http://apt.kubernetes.io/ kubernetes-xenial main' state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: update the apt cache
+  apt: update_cache=yes
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Install Kubelet
+  apt: name=kubelet state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: install kubeadm
+  apt: name=kubeadm state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Install Kubectl
+  apt: name=kubectl state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Install Kubernetes-cni
+  apt: name=kubernetes-cni state=present
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Check to see if the kubernetes configuration is empty
+  command: ls /var/lib/kubelet/pods/
+  register: pod_config
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Move any possible configuration to backup
+  when: pod_config.stdout == ""
+  command: mv /var/lib/kubelet/ /var/lib/kubelet-{{ ansible_date_time.date }}
+  register: do_kubeadm_init
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: create the /var/lib/kubelet directory
+  when: do_kubeadm_init|changed
+  file: path=/var/lib/kubelet state=directory mode=0755
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: create the system.slice link
+  when: do_kubeadm_init|changed
+  file: src=/sys/fs/cgroup/memory/system.slice dest=/system.slice state=link
+  tags:
+    - kubernetes-worker
+    - kubernetes
+
+- name: Attach to kubernetes
+  when: do_kubeadm_init|changed
+  command: kubeadm join --token={{ kubernetes_admin_token }} {{hostvars['localhost']['kubernetes_controll_ip'][0] }}:6443 --skip-preflight-checks
+  register: kubeadm_cmd
+  tags:
+    - kubernetes-worker
+    - kubernetes

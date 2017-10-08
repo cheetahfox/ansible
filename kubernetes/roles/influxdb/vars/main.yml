@@ -1,0 +1,6 @@
+---
+
+ansible_hostname: siglo-xxi-mon
+admin_user: admin
+admin_password: dg02am8n
+dbname: siglo_xxi_db

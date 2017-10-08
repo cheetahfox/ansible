@@ -1,0 +1,3 @@
+---
+zfs_dev: /dev/vdb
+zfs_device: /dev/vdb1

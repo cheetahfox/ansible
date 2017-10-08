@@ -1,0 +1,13 @@
+---
+- name: Install zfsutils-linux
+  apt: name=zfsutils-linux state=present
+  register: zfsutil_info
+
+- name: partition the zfs-device
+  when: zfsutil_info|changed
+  command: parted -s {{ zfs_dev }} mklabel gpt
+
+- name: create base zfs pool
+  when: zfsutil_info|changed
+  command: zpool create {{ zfs_pool_name }} {{ zfs_dev }}
+

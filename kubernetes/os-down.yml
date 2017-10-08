@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Connect to OpenStack SA
+    os_auth:
+    register: myauth
+
+  - name: Remove Kubernetes control 
+    os_server:
+      state: absent
+      name: kube-control
+
+  - name: Remove Kube-logs volume
+    os_volume:
+      state: absent
+      display_name: kube-logs
+
+  - name: Remove Kubernetes Workers 
+    os_server:
+      state: absent
+      name: kube-worker-{{ item }}
+    with_sequence:
+      count={{ kube_workers }}
+
+  - name: Remove volumes for the workers
+    os_volume:
+      state: absent
+      display_name: kube-worker-data-{{ item }}
+    with_sequence:
+      count={{ kube_workers }}
+
+

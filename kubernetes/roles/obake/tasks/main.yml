@@ -1,0 +1,22 @@
+---
+- name: Add Josh user
+  user:
+    name: josh
+    comment: "Joshua Snyder"
+    state: present
+    password: '$6$rounds=1000000$/hjJ9hsq$MIBhjxIWcKR0IGqEgTLkjsQJjdTLfxNhlbpUdsyt4qMXmMHWdN1eGTK2Q9PJvormWmJM84Zjda5mEI2xvr3Wo/'
+    createhome: yes
+    groups: admin,sudo
+    shell: /bin/bash
+
+- name: create a .ssh directory for Josh
+  file: path=/home/josh/.ssh state=directory mode=0755
+
+- name: Copy the private ssh keys
+  template: src=id_rsa dest=/home/josh/.ssh/id_rsa mode=0600
+
+- name: Copy the public ssh keys
+  template: src=id_rsa.pub dest=/home/josh/.ssh/authorized_keys mode=0644
+
+- name: Setup the hosts file
+  template: src=hosts.j2 dest=/etc/hosts mode=0644 

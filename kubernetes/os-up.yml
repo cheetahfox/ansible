@@ -1,0 +1,55 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Connect to OpenStack San Antonio
+    os_auth:
+    register: myauth
+
+  - name: Create a volume for Kube-control logs
+    os_volume:
+      state: present
+      size: 50
+      display_name: kube-logs
+
+  - name: Create a new Kube-control in OS
+    os_server:
+      state: present
+      name: kube-control
+      image: c0f4b3ee-6888-4b46-ae5c-6b8f7a58b8f2
+      network: isit-net
+      floating_ip_pools: ext-net
+      key_name: josh-key
+      timeout: 100
+      flavor: 43009156-4c08-45b2-884d-ed83198777c5
+      volumes: kube-logs
+      meta:
+        hostname: kube-control
+        type: kube-control 
+
+  - name: Create volumes for the workers
+    os_volume:
+      state: present
+      size: 80
+      display_name: kube-worker-data-{{ item }}
+    with_sequence:
+      count={{ kube_workers }} 
+
+  - name: Create a new Kube-worker in OS
+    os_server:
+      state: present
+      name: kube-worker-{{ item }}
+      image: c0f4b3ee-6888-4b46-ae5c-6b8f7a58b8f2
+      network: isit-net
+      floating_ip_pools: ext-net
+      key_name: josh-key
+      timeout: 100
+      flavor: 03d24287-a299-4885-8d94-1e6f1940ae8d
+      volumes: kube-worker-data-{{ item }}
+      meta:
+        hostname: kube-worker-{{ item }}
+        type: kube-worker
+    with_sequence:
+      count={{ kube_workers }}
+
+  - name: Refresh the dynamic inventory list from OS
+    meta: refresh_inventory

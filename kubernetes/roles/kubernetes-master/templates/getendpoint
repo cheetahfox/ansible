@@ -1,0 +1,3 @@
+#!/bin/bash
+export KUBECONFIG=$HOME/.kube/admin.conf
+kubectl get endpoints | tail -n1 | awk '{print $2}' | cut -d ':' -f 1
