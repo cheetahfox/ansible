@@ -1,6 +1,6 @@
 ---
 # Joshua Snyder 6-5-2016
-- hosts: meta-type_kube-worker:meta-type_kube-control
+- hosts: all
   gather_facts: False
   become: true
   become_user: root
