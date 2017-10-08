@@ -1,0 +1,7 @@
+# Ansible retry
+*.retry
+
+# Ignore vim swap files
+*.swp
+*.swo
+*~

@@ -2,10 +2,9 @@
 # file site.yml
 # baas andible playbook
 - include: pre-config.yml
-- include: os-discovery.yml 
 - include: all-hosts.yml
-- include: zfs-install.yml
+#- include: zfs-install.yml
 - include: docker-kernel.yml
 - include: docker-host.yml
 - include: kubernetes-master.yml
-- include: kubernetes-worker.yml
+#- include: kubernetes-worker.yml

@@ -1,6 +1,0 @@
----
-- name: Remove the apt proxy configuration
-  file: state=absent path=/etc/apt/apt.conf.d/02proxy
-  tags:
-    - proxy-off
-
